@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/token"
 	"os"
@@ -16,6 +17,9 @@ func findLiterals(file *ast.File) []string {
 		if _, ok := node.(*ast.ImportSpec); ok {
 			return false
 		}
+		if _, ok := node.(*ast.Field); ok {
+			return false
+		}
 
 		if basicStmt, ok := node.(*ast.BasicLit); ok {
 			if basicStmt.Kind == token.STRING {
@@ -27,79 +31,134 @@ func findLiterals(file *ast.File) []string {
 	return literals
 }
 
-func addConstants(file *ast.File, literals []string) *ast.File {
-	added := make(map[string]int)
-	counter := 0
-	for _, v := range literals {
-		curr := 0
-		if added[v] != 0 {
-			curr = added[v]
-		} else {
-			curr = counter
+func addConstants(file *ast.File, literals []string) (*ast.File, map[string]int) {
+	addedConstantsIdxs := make(map[string]int)
+	constCounter := 1
+	startOfConsts := 0
+	for i := range file.Decls {
+		if stmt, ok := file.Decls[i].(*ast.GenDecl); ok && stmt.Tok == token.IMPORT {
+			startOfConsts++
+			continue
 		}
-		file.Decls = append(file.Decls,
-			&ast.GenDecl{
-				Tok: token.CONST,
-				Specs: []ast.Spec{
-					&ast.ValueSpec{
-						Names: []*ast.Ident{&ast.Ident{
-							Name: "const" + strconv.Itoa(counter),
-							Obj:  ast.NewObj(ast.ObjKind(ast.Con), "const"+strconv.Itoa(curr)),
-						}},
-						Values: []ast.Expr{
-							&ast.BasicLit{
-								Kind:  token.STRING,
-								Value: v,
-							},
+		break
+	} // вычисляем где начать вставку констант
+
+	for _, v := range literals {
+		if addedConstantsIdxs[v] != 0 {
+			continue
+		}
+		file.Decls = append(file.Decls[:startOfConsts+1], file.Decls[startOfConsts:]...)
+		file.Decls[startOfConsts] = &ast.GenDecl{
+			Tok: token.CONST,
+			Specs: []ast.Spec{
+				&ast.ValueSpec{
+					Names: []*ast.Ident{{
+						Name: "const" + strconv.Itoa(constCounter),
+					}},
+					Values: []ast.Expr{
+						&ast.BasicLit{
+							Kind:  token.STRING,
+							Value: v,
 						},
 					},
 				},
 			},
-		)
-		if added[v] == 0 {
-			added[v] = counter
-			counter++
+		}
+		addedConstantsIdxs[v] = constCounter
+		startOfConsts++
+		constCounter++
+	}
+	return file, addedConstantsIdxs
+}
+
+func createIdentNode(name string, names map[string]int) *ast.Ident {
+	constName := "const" + strconv.Itoa(names[name])
+	ident := &ast.Ident{
+		Name: constName,
+	}
+	return ident
+}
+
+func replace(file *ast.File, names map[string]int) *ast.File {
+	for _, v := range file.Decls {
+		if _, ok := v.(*ast.FuncDecl); ok {
+			ast.Inspect(v, func(node ast.Node) bool {
+				switch castedNode := node.(type) {
+				case *ast.CallExpr:
+					for i := range castedNode.Args {
+						if bl, ok := castedNode.Args[i].(*ast.BasicLit); ok && bl.Kind == token.STRING {
+							castedNode.Args[i] = createIdentNode(bl.Value, names)
+						}
+					}
+				case *ast.BinaryExpr:
+					if bl, ok := castedNode.X.(*ast.BasicLit); ok {
+						castedNode.X = createIdentNode(bl.Value, names)
+					}
+					if bl, ok := castedNode.Y.(*ast.BasicLit); ok {
+						castedNode.Y = createIdentNode(bl.Value, names)
+					}
+				case *ast.ValueSpec:
+					for i := range castedNode.Values {
+						if bl, ok := castedNode.Values[i].(*ast.BasicLit); ok && bl.Kind == token.STRING {
+							castedNode.Values[i] = createIdentNode(bl.Value, names)
+						}
+					}
+				case *ast.AssignStmt:
+					for i, v := range castedNode.Rhs {
+						if bl, ok := v.(*ast.BasicLit); ok {
+							castedNode.Rhs[i] = createIdentNode(bl.Value, names)
+						}
+					}
+				case *ast.CompositeLit:
+					for i, v := range castedNode.Elts {
+						if bl, ok := v.(*ast.BasicLit); ok {
+							castedNode.Elts[i] = createIdentNode(bl.Value, names)
+						}
+					}
+				case *ast.KeyValueExpr:
+					if bl, ok := castedNode.Key.(*ast.BasicLit); ok {
+						castedNode.Key = createIdentNode(bl.Value, names)
+					}
+					if bl, ok := castedNode.Value.(*ast.BasicLit); ok {
+						castedNode.Value = createIdentNode(bl.Value, names)
+					}
+				}
+				return true
+			})
 		}
 	}
 	return file
 }
 
-func replace(file *ast.File) []string {
-	literals := make([]string, 0)
-	ast.Inspect(file, func(node ast.Node) bool {
-		if _, ok := node.(*ast.ValueSpec); ok {
-
-			return false
-		}
-	})
-	return literals
-}
-
-func findRequiredChild() {
-
-}
-
 func main() {
-
-	// Создаём хранилище данных об исходных файлах
 	fset := token.NewFileSet()
-
-	// Вызываем парсер
-	if file, err := parser.ParseFile(
+	astTree, err := parser.ParseFile(
 		fset,                 // данные об исходниках
-		"demo.go",            // имя файла с исходником программы
+		"demo/demo.go",       // имя файла с исходником программы
 		nil,                  // пусть парсер сам загрузит исходник
 		parser.ParseComments, // приказываем сохранять комментарии
-	); err == nil {
-		// Если парсер отработал без ошибок, печатаем дерево
-		res := findLiterals(file)
-		file = addConstants(file, res)
-
-		ast.Fprint(os.Stdout, fset, file, nil)
-		//format.Node(os.Stdout, fset, file)
-		fmt.Println(res)
-	} else {
-		// в противном случае, выводим сообщение об ошибке
+	)
+	if err != nil {
 		fmt.Printf("Error: %v", err)
+		return
 	}
+	strLiterals := findLiterals(astTree)
+	astTree, namesMap := addConstants(astTree, strLiterals)
+
+	resFile, err := os.Create("res.txt")
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		return
+	}
+
+	astTree = replace(astTree, namesMap)
+
+	ast.Fprint(resFile, fset, astTree, nil)
+	resFile2, err := os.Create("res/res2.go")
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		return
+	}
+
+	format.Node(resFile2, fset, astTree)
 }
