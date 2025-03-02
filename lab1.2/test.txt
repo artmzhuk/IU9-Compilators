@@ -1,0 +1,21 @@
+// Корректные числовые литералы
+0
+1
+111
+
+// Некорректные числовые литералы
+2
+01
+10
+
+// Корректные строковые литералы
+"Hello, world!"
+"Line 1\nLine 2"
+"Tab\tSeparated"
+@"Multi-line
+string with ""quotes"" inside"
+
+// Некорректные строковые литералы
+"Unfinished string
+"Invalid \q escape"
+@"Unfinished multi-line string
