@@ -85,7 +85,7 @@ func (t *Tokenizer) NextToken() *Token {
 func newTokenizer(input string, regex []Pair) (Tokenizer, error) {
 	tokenizer := Tokenizer{
 		input:              input,
-		line:               0,
+		line:               1,
 		charPositionInLine: 0,
 		bytePosition:       0,
 		domains:            make([]Token, 0, len(regex)),
@@ -113,14 +113,17 @@ func openFile(name string) string {
 }
 
 func main() {
-	//input := openFile("lab1.2/test.txt")
-	input := `"Unfinished string`
+	input := openFile("lab1.2/test.txt")
+	//input := `"Unfinished string`
 	t, err := newTokenizer(input, []Pair{{
-		first:  "IDENT",
-		second: `^"(?:[^"\\\n\r]*|\\["tnr])*"|^@"(?:[^"]|"")*"`,
+		first:  "IDENT1",
+		second: `^\A"(?:\\.|[^"\\])*"`,
 	}, {
 		first:  "NUMBER",
 		second: `^(0|1+)`,
+	}, {
+		first:  "IDENT2",
+		second: `\A@"(?:[^"]|"")*"`,
 	},
 	})
 	if err != nil {

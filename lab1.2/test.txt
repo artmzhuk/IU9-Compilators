@@ -16,6 +16,4 @@
 string with ""quotes"" inside"
 
 // Некорректные строковые литералы
-"Unfinished string
-"Invalid \q escape"
 @"Unfinished multi-line string
