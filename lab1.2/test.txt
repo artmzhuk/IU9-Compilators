@@ -2,18 +2,16 @@
 0
 1
 111
-
-// Некорректные числовые литералы
-2
 01
 10
 
+2
+
 // Корректные строковые литералы
-"Hello, world!"
+"Hello, world!" "Hello, world1!"
 "Line 1\nLine 2"
 "Tab\tSeparated"
 @"Multi-line
 string with ""quotes"" inside"
 
-// Некорректные строковые литералы
 @"Unfinished multi-line string

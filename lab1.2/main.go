@@ -113,18 +113,24 @@ func openFile(name string) string {
 }
 
 func main() {
-	input := openFile("lab1.2/test.txt")
+	if len(os.Args) < 2 {
+		fmt.Println("Необходимо передать путь к файлу")
+		return
+	}
+	filePath := os.Args[1]
+	input := openFile(filePath)
 	//input := `"Unfinished string`
-	t, err := newTokenizer(input, []Pair{{
-		first:  "IDENT1",
-		second: `^\A"(?:\\.|[^"\\])*"`,
-	}, {
-		first:  "NUMBER",
-		second: `^(0|1+)`,
-	}, {
-		first:  "IDENT2",
-		second: `\A@"(?:[^"]|"")*"`,
-	},
+	t, err := newTokenizer(input, []Pair{
+		{
+			first:  "NUMBER",
+			second: `\A(0|1+)`,
+		}, {
+			first:  "IDENT1",
+			second: `\A"(?:\\[NTnt\"]|[^"\\])*"`,
+		}, {
+			first:  "IDENT2",
+			second: `\A@"(?:[^"]|"")*"`,
+		},
 	})
 	if err != nil {
 		fmt.Println(err)
