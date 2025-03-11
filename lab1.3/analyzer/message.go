@@ -71,7 +71,7 @@ func (d *NameDictionary) GetCode(name string) int {
 	return d.NamesMap[name]
 }
 
-type Compiler struct {
-	Names    NameDictionary
-	Messages []Message
-}
+// type Compiler struct {
+// 	Names    NameDictionary
+// 	Messages []Message
+// }

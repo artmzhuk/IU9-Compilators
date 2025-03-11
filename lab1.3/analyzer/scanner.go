@@ -1,25 +1,26 @@
 package analyzer
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strconv"
+	"strings"
 )
 
 type Scanner struct {
-	program  string
 	position position
 	errors   messageList
 	Names    NameDictionary
 }
 
-func NewScanner(input string) Scanner {
-	return Scanner{
-		program: input,
+func NewStdinScanner() Scanner {
+	s := Scanner{
 		position: position{
-			Line:  1,
-			Pos:   1,
-			Index: 0,
-			Text:  []rune(input),
+			Line:   1,
+			Pos:    1,
+			Index:  0,
+			reader: bufio.NewReader(os.Stdin),
 		},
 		errors: messageList{
 			Messages: make([]Message, 0),
@@ -30,6 +31,30 @@ func NewScanner(input string) Scanner {
 			NamesMap: make(map[string]int),
 		},
 	}
+	s.position.readRune()
+	return s
+}
+
+func NewStringScanner(input string) Scanner {
+	s := Scanner{
+		position: position{
+			Line:   1,
+			Pos:    1,
+			Index:  0,
+			reader: bufio.NewReader(strings.NewReader(input)),
+			//Text:  []rune(input),
+		},
+		errors: messageList{
+			Messages: make([]Message, 0),
+		},
+		Names: NameDictionary{
+			counter:  0,
+			IndexMap: make(map[int]string),
+			NamesMap: make(map[string]int),
+		},
+	}
+	s.position.readRune()
+	return s
 }
 
 func (s *Scanner) NextToken() *token {
@@ -117,7 +142,7 @@ func (s *Scanner) NextToken() *token {
 		} else {
 			s.errors.addError(s.position, "Неизвестный токен")
 			for !s.position.isDigit() && s.position.cp() != '?' && s.position.cp() != '*' && s.position.cp() != '|' &&
-				s.position.cp() != '`' {
+				s.position.cp() != '`' && s.position.cp() != -1 {
 				s.position.next()
 			}
 			//fmt.Println("achtung")

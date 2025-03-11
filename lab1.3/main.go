@@ -7,8 +7,9 @@ import (
 )
 
 func main() {
-	input := "0110b25\n58  78  5214b\n\t?52141 011b\n ```bipki```\n ахахха `lol`"
-	scanner := analyzer.NewScanner(input)
+	//input := "0110b25\n58  78  5214b\n\t?52141 011b\n ```bipki```\n `ахахха` `lol` |77"
+	//scanner := analyzer.NewStringScanner(input)
+	scanner := analyzer.NewStdinScanner()
 	t := scanner.NextToken()
 	for t != nil {
 		fmt.Println(t)
