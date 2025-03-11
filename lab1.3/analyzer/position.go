@@ -36,10 +36,10 @@ func (p *position) isNewLine() bool {
 }
 
 func (p *position) isWhiteSpace() bool {
-	if p.isNewLine() {
-		return true
+	if p.cp() == -1 {
+		return false
 	}
-	if p.cp() == ' ' || p.cp() == '\t' {
+	if p.isNewLine() || p.cp() == ' ' || p.cp() == '\t' {
 		return true
 	}
 	return false

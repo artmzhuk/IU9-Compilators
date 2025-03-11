@@ -59,8 +59,11 @@ func NewStringScanner(input string) Scanner {
 
 func (s *Scanner) NextToken() *token {
 	for s.position.cp() != -1 {
-		for s.position.isWhiteSpace() {
-			s.position.next()
+		if s.position.isWhiteSpace() {
+			for s.position.isWhiteSpace() {
+				s.position.next()
+			}
+			continue
 		}
 		currentFragment := fragment{
 			starting: s.position,

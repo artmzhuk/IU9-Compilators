@@ -2,14 +2,28 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"lab1.3/analyzer"
 )
 
+func openFile(name string) string {
+	read, err := os.ReadFile(name)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return string(read)
+}
+
 func main() {
-	//input := "0110b25\n58  78  5214b\n\t?52141 011b\n ```bipki```\n `ахахха` `lol` |77"
-	//scanner := analyzer.NewStringScanner(input)
-	scanner := analyzer.NewStdinScanner()
+	var scanner analyzer.Scanner
+	if len(os.Args) > 1 {
+		input := openFile(os.Args[1])
+		scanner = analyzer.NewStringScanner(input)
+	} else {
+		scanner = analyzer.NewStdinScanner()
+	}
 	t := scanner.NextToken()
 	for t != nil {
 		fmt.Println(t)
