@@ -46,30 +46,17 @@ func (m *messageList) getErrors() []Message {
 	return m.Messages
 }
 
-/*
-func (m *MessageList) AddWarning(coord position, text string) {
-
-}
-
-func (m *MessageList) GetSorted() []Message {
-	return nil
-}
-
 type NameDictionary struct {
 	counter  int
 	NamesMap map[string]int
-	NamesArr []string
+	IndexMap map[int]string
 }
 
 func (d *NameDictionary) AddName(text string) int {
-	currIndex := d.counter
-	d.NamesMap[text] = currIndex
-	d.NamesArr = append(d.NamesArr, text)
-	if currIndex != len(d.NamesArr) {
-		panic("achtung!")
-	}
+	d.NamesMap[text] = d.counter
+	d.IndexMap[d.counter] = text
 	d.counter++
-	return currIndex
+	return d.counter - 1
 }
 func (d *NameDictionary) Contains(text string) bool {
 	_, ok := d.NamesMap[text]
@@ -77,13 +64,14 @@ func (d *NameDictionary) Contains(text string) bool {
 }
 
 func (d *NameDictionary) GetName(code int) string {
-	if code >= len(d.NamesArr) {
-		panic("achtung 2")
-	}
-	return d.NamesArr[code]
+	return d.IndexMap[code]
+}
+
+func (d *NameDictionary) GetCode(name string) int {
+	return d.NamesMap[name]
 }
 
 type Compiler struct {
 	Names    NameDictionary
-	Messages MessageList
-}*/
+	Messages []Message
+}

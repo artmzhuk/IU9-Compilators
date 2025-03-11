@@ -1,11 +1,15 @@
 package analyzer
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type Scanner struct {
 	program  string
 	position position
 	errors   messageList
+	Names    NameDictionary
 }
 
 func NewScanner(input string) Scanner {
@@ -19,6 +23,11 @@ func NewScanner(input string) Scanner {
 		},
 		errors: messageList{
 			Messages: make([]Message, 0),
+		},
+		Names: NameDictionary{
+			counter:  0,
+			IndexMap: make(map[int]string),
+			NamesMap: make(map[string]int),
 		},
 	}
 }
@@ -93,11 +102,17 @@ func (s *Scanner) NextToken() *token {
 				s.position.next()
 			}
 			currentFragment.ending = s.position
+			identIndex := -1
+			if s.Names.Contains(string(tokenRunes)) {
+				identIndex = s.Names.GetCode(string(tokenRunes))
+			} else {
+				identIndex = s.Names.AddName(string(tokenRunes))
+			}
 			return &token{
 				coords:    currentFragment,
 				domainTag: IDENT_TOKEN,
 				tag:       "IDENT_TOKEN",
-				value:     string(tokenRunes),
+				value:     fmt.Sprintf("%s: index %d", string(tokenRunes), identIndex),
 			}
 		} else {
 			s.errors.addError(s.position, "Неизвестный токен")
