@@ -34,7 +34,34 @@ type token struct {
 }
 
 func (t token) String() string {
-	return fmt.Sprintf("%v %s: %v", t.domainTag, t.coords.String(), t.value)
+	return fmt.Sprintf("%v %s: %v", t.getTokenName(), t.coords.String(), t.value)
+}
+
+func (t token) getTokenName() string {
+	switch t.domainTag {
+	case STR_TOKEN:
+		return "STR_TOKEN"
+	case NUMBER_TOKEN:
+		return "NUMBER_TOKEN"
+	case BINARY_TOKEN:
+		return "BINARY_TOKEN"
+	case IDENT_TOKEN:
+		return "IDENT_TOKEN"
+	case COMMENT_TOKEN:
+		return "COMMENT_TOKEN"
+	case CASE_TOKEN:
+		return "CASE_TOKEN"
+	case BREAK_TOKEN:
+		return "BREAK_TOKEN"
+	case LBR_TOKEN:
+		return "LBR_TOKEN"
+	case STAR_TOKEN:
+		return "STAR_TOKEN"
+	case RBR_TOKEN:
+		return "RBR_TOKEN"
+	default:
+		return "unknown token"
+	}
 }
 
 type messageList struct {
