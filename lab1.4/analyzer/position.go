@@ -79,11 +79,12 @@ func (p *position) String() string {
 	return fmt.Sprintf("(%d, %d)", p.Line, p.Pos)
 }
 
-type fragment struct {
+type Fragment struct {
 	starting position
 	ending   position
+	comments string
 }
 
-func (f fragment) String() string {
-	return f.starting.String() + "-" + f.ending.String()
+func (f Fragment) String() string {
+	return f.starting.String() + "-" + f.ending.String() + " comments: " + f.comments
 }

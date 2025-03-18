@@ -2,49 +2,52 @@ package analyzer
 
 import (
 	"bufio"
+	"strconv"
 	"strings"
 )
 
-var transitionTable = [][]int{
-	/*              0   1   2   3   4   5   6   7   8   9   10  11  12     */
-	/*             Az  09   (   *   )   a   b   c   e   k   r   s    \t\n  */
-	/* state 0 */ {17, 16, 10, 15, 14, 17, 5, 1, 17, 17, 17, 17, 0},
-	/* state 1 */ {-1, -1, -1, -1, -1, 2, 17, 17, 17, 17, 17, 17, -1},
-	/* state 2 */ {-1, -1, -1, -1, -1, 17, 17, 17, 17, 17, 17, 3, -1},
-	/* state 3 */ {-1, -1, -1, -1, -1, 17, 17, 17, 4, 17, 17, 17, -1},
-	/* state 4 */ {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-	/* state 5 */ {-1, -1, -1, -1, -1, 17, 17, 17, 17, 17, 6, 17, -1},
-	/* state 6 */ {-1, -1, -1, -1, -1, 17, 17, 17, 7, 17, 17, 17, -1},
-	/* state 7 */ {-1, -1, -1, -1, -1, 8, 17, 17, 17, 17, 17, 17, -1},
-	/* state 8 */ {-1, -1, -1, -1, -1, 17, 17, 17, 17, 9, 17, 17, -1},
-	/* state 9 */ {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-	/* state 10*/ {-1, -1, -1, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-	/* state 11*/ {11, 11, 11, 12, 11, 11, 11, 11, 11, 11, 11, 11, 11},
-	/* state 12*/ {11, 11, 11, 11, 13, 11, 11, 11, 11, 11, 11, 11, 11},
-	/* state 13*/ {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-	/* state 14*/ {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-	/* state 15*/ {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-	/* state 16*/ {-1, 16, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-	/* state 17*/ {17, 17, -1, -1, -1, 17, 17, 17, 17, 17, 17, 17, -1},
-	/* Az -- все буквы кроме отдельных*/
+type Automata struct {
+	TransitionTable [][]int
+	IsFinalState    func(c int) TokenInt
+	GetSymbolIdx    func(symbol rune) int
+	currentState    int
+}
+
+func (a *Automata) GetCurrentState() int {
+	return a.currentState
+}
+
+func (a *Automata) SwitchToState(newState int) {
+	if newState > len(a.TransitionTable) {
+		panic("wrong state jump")
+	}
+	a.currentState = newState
+}
+
+func (a *Automata) GetNextState(symbol rune) int {
+	id := a.GetSymbolIdx(symbol)
+	if id != -1 {
+		return a.TransitionTable[a.currentState][id]
+	} else {
+		return -1
+	}
 }
 
 type AutomataScanner struct {
-	position     position
-	errors       messageList
-	Names        NameDictionary
-	currentState int
-	table        [][]int
+	position position
+	errors   messageList
+	Names    NameDictionary
+	automata Automata
+	comments []Fragment
 }
 
-func NewAutomataScanner(input string) *AutomataScanner {
+func NewAutomataScanner(input string, a Automata) *AutomataScanner {
 	s := &AutomataScanner{
 		position: position{
 			Line:   1,
 			Pos:    1,
 			Index:  0,
 			reader: bufio.NewReader(strings.NewReader(input)),
-			//Text:  []rune(input),
 		},
 		errors: messageList{
 			Messages: make([]Message, 0),
@@ -54,79 +57,10 @@ func NewAutomataScanner(input string) *AutomataScanner {
 			IndexMap: make(map[int]string),
 			NamesMap: make(map[string]int),
 		},
-		currentState: 0,
-		table:        transitionTable,
+		automata: a,
 	}
 	s.position.readRune()
 	return s
-}
-
-func (s *AutomataScanner) ChangeState(newState int) {
-	s.currentState = newState
-}
-
-func (s *AutomataScanner) getAlphabetId(symbol rune) int {
-	switch symbol {
-	case 'a':
-		return 5
-	case 'b':
-		return 6
-	case 'c':
-		return 7
-	case 'e':
-		return 8
-	case 'k':
-		return 9
-	case 'r':
-		return 10
-	case 's':
-		return 11
-	case '(':
-		return 2
-	case '*':
-		return 3
-	case ')':
-		return 4
-	}
-	if symbol >= '0' && symbol <= '9' {
-		return 1
-	} else if (symbol >= 'A' && symbol <= 'Z') || (symbol >= 'a' && symbol <= 'z') {
-		return 0
-	} else if symbol == '\n' || symbol == '\r' || symbol == '\t' || symbol == ' ' {
-		return 12
-	} else {
-		return -1
-	}
-}
-
-func (s *AutomataScanner) GetNextState(symbol rune) int {
-	id := s.getAlphabetId(symbol)
-	if id != -1 {
-		return s.table[s.currentState][id]
-	} else {
-		return -1
-	}
-}
-
-func (s *AutomataScanner) IsFinalState(c int) int {
-	if (c >= 1 && c <= 3) || (c >= 5 && c <= 8) || c == 17 {
-		return IDENT_TOKEN
-	} else if c == 16 {
-		return NUMBER_TOKEN
-	} else if c == 4 {
-		return CASE_TOKEN
-	} else if c == 9 {
-		return BREAK_TOKEN
-	} else if c == 10 {
-		return LBR_TOKEN
-	} else if c == 14 {
-		return RBR_TOKEN
-	} else if c == 15 {
-		return STAR_TOKEN
-	} else if c == 13 {
-		return COMMENT_TOKEN
-	}
-	return -1
 }
 
 func (s *AutomataScanner) NextToken() *token {
@@ -135,42 +69,57 @@ func (s *AutomataScanner) NextToken() *token {
 			for s.position.isWhiteSpace() {
 				s.position.next()
 			}
-			//s.currentState = 0
 			continue
 		}
-		currentFragment := fragment{
+		currentFragment := Fragment{
 			starting: s.position,
 			ending:   position{},
 		}
 		tokenRunes := make([]rune, 0)
-		s.currentState = 0
-		if s.GetNextState(s.position.cp()) != -1 && s.position.cp() != -1 {
-			for s.GetNextState(s.position.cp()) != -1 {
+		s.automata.SwitchToState(0)
+		if s.automata.GetNextState(s.position.cp()) != -1 && s.position.cp() != -1 {
+			for s.automata.GetNextState(s.position.cp()) != -1 {
 				if s.position.cp() != '\r' {
 					tokenRunes = append(tokenRunes, s.position.cp())
 				}
-				s.ChangeState(s.GetNextState(s.position.cp()))
+				s.automata.SwitchToState(s.automata.GetNextState(s.position.cp()))
 				s.position.next()
 			}
-			if s.IsFinalState(s.currentState) != -1 {
+			if s.automata.IsFinalState(s.automata.GetCurrentState()) != -1 {
+				currentTokenId := s.automata.IsFinalState(s.automata.GetCurrentState())
 				currentFragment.ending = s.position
-				//s.currentState = 0
+				identTokenID := ""
+				if currentTokenId == IDENT_TOKEN {
+					identIndex := -1
+					if s.Names.Contains(string(tokenRunes)) {
+						identIndex = s.Names.GetCode(string(tokenRunes))
+					} else {
+						identIndex = s.Names.AddName(string(tokenRunes))
+					}
+					identTokenID = " id" + strconv.Itoa(identIndex)
+				} else if currentTokenId == COMMENT_TOKEN {
+					if len(tokenRunes) >= 4 { // а меньше и быть не может (**)
+						currentFragment.comments = string(tokenRunes[2 : len(tokenRunes)-2])
+					}
+					s.comments = append(s.comments, currentFragment)
+					continue
+				}
 				return &token{
 					coords:    currentFragment,
-					domainTag: s.IsFinalState(s.currentState),
-					tag:       "token",
-					value:     string(tokenRunes),
+					domainTag: currentTokenId,
+					value:     string(tokenRunes) + identTokenID,
 				}
 			} else {
+				// остановились не в финальном состоянии
 				s.errors.addError(s.position, "Неизвестный токен")
-				for s.GetNextState(s.position.cp()) == -1 && s.position.cp() != -1 {
+				for s.automata.GetNextState(s.position.cp()) == -1 && s.position.cp() != -1 {
 					s.position.next()
 				}
 				continue
 			}
 		} else {
 			s.errors.addError(s.position, "Неизвестный токен")
-			for s.GetNextState(s.position.cp()) == -1 && s.position.cp() != -1 {
+			for s.automata.GetNextState(s.position.cp()) == -1 && s.position.cp() != -1 {
 				s.position.next()
 			}
 			continue
@@ -181,4 +130,8 @@ func (s *AutomataScanner) NextToken() *token {
 
 func (s *AutomataScanner) GetErrors() []Message {
 	return s.errors.Messages
+}
+
+func (s *AutomataScanner) GetComments() []Fragment {
+	return s.comments
 }

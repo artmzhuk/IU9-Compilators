@@ -4,8 +4,10 @@ import (
 	"fmt"
 )
 
+type TokenInt int
+
 const (
-	STR_TOKEN = iota
+	STR_TOKEN TokenInt = iota
 	NUMBER_TOKEN
 	BINARY_TOKEN
 	IDENT_TOKEN
@@ -27,8 +29,8 @@ func (m Message) String() string {
 }
 
 type token struct {
-	coords    fragment
-	domainTag int
+	coords    Fragment
+	domainTag TokenInt
 	tag       string
 	value     any
 }
