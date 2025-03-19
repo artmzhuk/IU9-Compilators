@@ -1,20 +1,20 @@
 package analyzer
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
-	"io"
 )
 
 type position struct {
 	currentRune      rune
 	Line, Pos, Index int
-	reader           *bufio.Reader
-	//Text             []rune
+	//reader           *bufio.Reader
+	Text []rune
 }
 
 func (p *position) cp() rune {
+	if p.Index == len(p.Text) {
+		return -1
+	}
 	return p.currentRune
 }
 
@@ -23,14 +23,15 @@ func (p *position) isNewLine() bool {
 		return true
 	}
 	if p.cp() == '\r' {
-		p.readRune()
-		peek := p.cp()
-		err := p.reader.UnreadRune()
-		if err != nil {
-			panic("achtung 3")
-		}
-		p.currentRune = '\r'
-		return peek == '\n'
+		return true
+		// p.readRune()
+		// peek := p.cp()
+		// err := p.reader.UnreadRune()
+		// if err != nil {
+		// 	panic("achtung 3")
+		// }
+		// p.currentRune = '\r'
+		// return peek == '\n'
 	}
 	return p.cp() == '\n'
 }
@@ -50,17 +51,22 @@ func (p *position) isDigit() bool {
 }
 
 func (p *position) readRune() {
-	readRune, _, err := p.reader.ReadRune()
-	if err != nil {
-		if errors.Is(err, io.EOF) {
-			p.currentRune = -1
-			return
-		}
-		fmt.Println(err)
-		p.currentRune = 0xFFFD
+	// readRune, _, err := p.reader.ReadRune()
+	// if err != nil {
+	// 	if errors.Is(err, io.EOF) {
+	// 		p.currentRune = -1
+	// 		return
+	// 	}
+	// 	fmt.Println(err)
+	// 	p.currentRune = 0xFFFD
+	// 	return
+	// }
+	p.Index++
+	if p.Index >= len(p.Text) {
+		p.currentRune = -1
 		return
 	}
-	p.currentRune = readRune
+	p.currentRune = p.Text[p.Index]
 	return
 }
 

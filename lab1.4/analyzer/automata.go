@@ -1,9 +1,7 @@
 package analyzer
 
 import (
-	"bufio"
 	"strconv"
-	"strings"
 )
 
 type Automata struct {
@@ -11,6 +9,7 @@ type Automata struct {
 	IsFinalState    func(c int) TokenInt
 	GetSymbolIdx    func(symbol rune) int
 	currentState    int
+	prevFinalState  int
 }
 
 func (a *Automata) GetCurrentState() int {
@@ -34,20 +33,23 @@ func (a *Automata) GetNextState(symbol rune) int {
 }
 
 type AutomataScanner struct {
-	position position
-	errors   messageList
-	Names    NameDictionary
-	automata Automata
-	comments []Fragment
+	position     position
+	errors       messageList
+	Names        NameDictionary
+	automata     Automata
+	comments     []Fragment
+	prevPosition position
 }
 
 func NewAutomataScanner(input string, a Automata) *AutomataScanner {
 	s := &AutomataScanner{
 		position: position{
-			Line:   1,
-			Pos:    1,
-			Index:  0,
-			reader: bufio.NewReader(strings.NewReader(input)),
+			Line:        1,
+			Pos:         1,
+			Index:       0,
+			Text:        []rune(input),
+			currentRune: []rune(input)[0],
+			//reader: bufio.NewReader(strings.NewReader(input)),
 		},
 		errors: messageList{
 			Messages: make([]Message, 0),
@@ -59,7 +61,7 @@ func NewAutomataScanner(input string, a Automata) *AutomataScanner {
 		},
 		automata: a,
 	}
-	s.position.readRune()
+	//s.position.readRune()
 	return s
 }
 
@@ -78,13 +80,23 @@ func (s *AutomataScanner) NextToken() *token {
 		tokenRunes := make([]rune, 0)
 		s.automata.SwitchToState(0)
 		if s.automata.GetNextState(s.position.cp()) != -1 && s.position.cp() != -1 {
-			for s.automata.GetNextState(s.position.cp()) != -1 {
+			for s.automata.currentState != -1 {
 				if s.position.cp() != '\r' {
 					tokenRunes = append(tokenRunes, s.position.cp())
+				} else {
+					tokenRunes = append(tokenRunes, '\n')
+				}
+				if s.automata.IsFinalState(s.automata.GetCurrentState()) != -1 {
+					s.automata.prevFinalState = s.automata.currentState
+					s.prevPosition = s.position
 				}
 				s.automata.SwitchToState(s.automata.GetNextState(s.position.cp()))
-				s.position.next()
+				if s.automata.currentState != -1 {
+					s.position.next()
+				}
 			}
+			s.automata.currentState = s.automata.prevFinalState
+			s.position = s.prevPosition
 			if s.automata.IsFinalState(s.automata.GetCurrentState()) != -1 {
 				currentTokenId := s.automata.IsFinalState(s.automata.GetCurrentState())
 				currentFragment.ending = s.position
@@ -107,7 +119,7 @@ func (s *AutomataScanner) NextToken() *token {
 				return &token{
 					coords:    currentFragment,
 					domainTag: currentTokenId,
-					value:     string(tokenRunes) + identTokenID,
+					value:     string(tokenRunes[:len(tokenRunes)-1]) + identTokenID,
 				}
 			} else {
 				// остановились не в финальном состоянии
