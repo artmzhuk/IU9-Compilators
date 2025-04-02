@@ -2,3 +2,8 @@
 lab2/res
 lab2/res.txt
 .vscode
+.idea
+cmake-build-*
+lab1.5/m.*
+lab1.5/lexer
+lab1.5/lexer.c
