@@ -5,24 +5,20 @@ DOUBLE = [0-9]+(.[0-9]*)?(e[-+]?[0-9]+)?
 STRING = (".*")
 VARNAME = ([A-Za-z][A-Za-z0-9]*)
 
-Program ->  Functions
+Program ->  Functions 
 
 Functions -> Function*
 
 Function -> FUNCTION VarDef ( FunctionParams ) Statements END FUNCTION
 	  | SUB VARNAME ( FunctionParams ) Statements END SUB
 
-FunctionParams -> FunctionParams , FunctionParam
-		| FunctionParam
-		| ε
-
-FunctionParam -> VarDef
-FunctionParam -> VarDef ()
+FunctionParams -> FunctionParams , Expr
+		| Expr
+		| eps
 
 VarDef -> VARNAME Type
 Type -> % | & | ! | # | $ | eps
 	
-Последовательность операторов:
 Statements -> Statement*
 
 Оператор — присваивание, условие, условие с ветвлением, цикл, цикл со счётчиком, оператор DIM:
@@ -34,10 +30,8 @@ Statement -> AssignStatement
 	   | DimStatement
 	   
 	  
-Оператор присваивания:
 AssignStatement -> Factor = Expr
 
-Условный оператор:
 IfStatement -> IF Expr THEN Statements END IF
 IfElseStatement -> IF Expr THEN Statements ELSE Statements END IF
 
@@ -48,13 +42,9 @@ WhileStatement -> DO WHILE Expr Statements LOOP
 		| DO Statements LOOP UNTIL Expr
 		| DO Statements LOOP
 		
-Цикл со счётчиком:
 ForStatement -> FOR VarDef = Expr TO Expr Statements NEXT VarDef
 
-Оператор DIM;
-DimStatement - > DIM DimArrayDecl
-DimArrayDecl -> VarDef "(" Expr ")"  # Размер массива - выражение: coefs!(4)
-
+DimStatement - > DIM Factor
 
 Выражение — переменная, константа, двуместная операция, одноместная операция, вызов функции, элемент массива:
 Expr -> ArithmExpr
@@ -82,8 +72,7 @@ Factor -> NOT Factor
        | VarDef ( FunctionParams )
        | VARNAME ( FunctionParams )
        | VarDef [ Expr ]
-       | VarDef (Expr)
-	   | VarDef (VarDef)
+       | VarDef
        | Const
        | ( Expr )
 

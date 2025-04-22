@@ -15,54 +15,73 @@ class Type(enum.Enum):
     Double = 'DOUBLE'
     String = 'STRING'
 
-
+# VarDef -> VARNAME Type
 @dataclass
 class VarDef:
     name : str 
     type : Type = None
 
+# Statement -> AssignStatement
+# 	   | IfStatement
+# 	   | IfElseStatement
+# 	   | WhileStatement
+# 	   | ForStatement
+# 	   | DimStatement
 class Statement(abc.ABC):
     pass
 
+# Function -> FUNCTION VarDef ( FunctionParams ) Statements END FUNCTION
+# 	  | SUB VARNAME ( FunctionParams ) Statements END SUB
 @dataclass
 class FunctionDef(Statement):
     FunctionName : str
     args : list[str]
     FunctionBlock : Statement
 
-
+# Program ->  Functions
 @dataclass
 class Program:
     function_defs : list[FunctionDef]
     # statements : list[Statement]
 
-
+# Expr -> ArithmExpr
+#       | ArithmExpr > ArithmExpr
+#       | ArithmExpr < ArithmExpr
+#       | ArithmExpr >= ArithmExpr
+#       | ArithmExpr <= ArithmExpr
+#       | ArithmExpr == ArithmExpr
+#       | ArithmExpr <> ArithmExpr
 class Expr(abc.ABC):
     pass
 
-
+# AssignStatement -> Factor = Expr
 @dataclass
 class AssignStatement(Statement):
     variable : str
     expr : Expr
 
-
+# IfStatement -> IF Expr THEN Statements END IF
 @dataclass
 class IfStatement(Statement):
     condition : Expr
     then_branch : Statement
 
+# IfElseStatement -> IF Expr THEN Statements ELSE Statements END IF
 @dataclass
 class IfElseStatement(IfStatement):
     else_branch : Statement
 
-
+# WhileStatement -> DO WHILE Expr Statements LOOP
+# 		| DO UNTIL Expr Statements LOOP
+# 		| DO Statements LOOP WHILE Expr
+# 		| DO Statements LOOP UNTIL Expr
+# 		| DO Statements LOOP
 @dataclass
 class WhileStatement(Statement):
     condition : Expr
     body : Statement
 
-
+# ForStatement -> FOR VarDef = Expr TO Expr Statements NEXT VarDef
 @dataclass
 class ForStatement(Statement):
     variable : str
@@ -71,6 +90,7 @@ class ForStatement(Statement):
     body : Statement
     var_next : str
 
+# DimStatement - > DIM Factor
 @dataclass
 class DimStatement(Statement):
     variable : Expr
