@@ -42,7 +42,7 @@ class FunctionDef(Statement):
 @dataclass
 class Program:
     function_defs : list[FunctionDef]
-    # statements : list[Statement]
+    statements : list[Statement]
 
 # Expr -> ArithmExpr
 #       | ArithmExpr > ArithmExpr
@@ -78,8 +78,10 @@ class IfElseStatement(IfStatement):
 # 		| DO Statements LOOP
 @dataclass
 class WhileStatement(Statement):
-    condition : Expr
+    condition : Expr | None
     body : Statement
+    precond: bool # с предусловием
+
 
 # ForStatement -> FOR VarDef = Expr TO Expr Statements NEXT VarDef
 @dataclass
@@ -160,7 +162,7 @@ NTerm, NMulOp, NFactor, NConst = \
     map(pe.NonTerminal, 'Term MulOp Factor Const'.split())
 
 
-NProgram |=  NFunctionDefs, Program
+NProgram |=  NFunctionDefs, NStatements, Program
 
 NFunctionDefs |= lambda: []
 NFunctionDefs |= NFunctionDefs, NFunctionDef, lambda fds, fd: fds + [fd]
@@ -196,19 +198,19 @@ NStatement |= (
 )
 
 NStatement |= (
-    KW_DO, KW_WHILE, NExpr, NStatements, KW_LOOP, WhileStatement
+    KW_DO, KW_WHILE, NExpr, NStatements, KW_LOOP, lambda expr, sts: WhileStatement(expr, sts, True)
 )
 NStatement |= (
-    KW_DO, KW_UNTIL, NExpr, NStatements, KW_LOOP, WhileStatement
+    KW_DO, KW_UNTIL, NExpr, NStatements, KW_LOOP, lambda expr, sts: WhileStatement(expr, sts, True)
 )
 NStatement |= (
-    KW_DO, NStatements, KW_LOOP, KW_WHILE, NExpr, WhileStatement
+    KW_DO, NStatements, KW_LOOP, KW_WHILE, NExpr, lambda sts, expr: WhileStatement(expr, sts, False)
 )
 NStatement |= (
-    KW_DO, NStatements, KW_LOOP, KW_UNTIL, NExpr, WhileStatement
+    KW_DO, NStatements, KW_LOOP, KW_UNTIL, NExpr, lambda sts, expr: WhileStatement(expr, sts, False) 
 )
 NStatement |= (
-    KW_DO, NStatements, KW_LOOP, WhileStatement
+    KW_DO, NStatements, KW_LOOP, lambda sts: WhileStatement(None, sts, False) 
 )
 NStatement |= (
     KW_FOR, NVarDef, '=', NExpr, KW_TO, NExpr, NStatements, KW_NEXT, NVarDef, ForStatement
