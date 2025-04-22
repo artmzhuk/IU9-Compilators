@@ -18,8 +18,8 @@ class Type(enum.Enum):
 
 @dataclass
 class VarDef:
-    name : str
-    type : Type
+    name : str 
+    type : Type = None
 
 class Statement(abc.ABC):
     pass
@@ -34,7 +34,7 @@ class FunctionDef(Statement):
 @dataclass
 class Program:
     function_defs : list[FunctionDef]
-    statements : list[Statement]
+    # statements : list[Statement]
 
 
 class Expr(abc.ABC):
@@ -140,7 +140,7 @@ NTerm, NMulOp, NFactor, NConst = \
     map(pe.NonTerminal, 'Term MulOp Factor Const'.split())
 
 
-NProgram |=  NFunctionDefs, NStatements, Program
+NProgram |=  NFunctionDefs, Program
 
 NFunctionDefs |= lambda: []
 NFunctionDefs |= NFunctionDefs, NFunctionDef, lambda fds, fd: fds + [fd]
@@ -155,6 +155,7 @@ NFunctionParams |= NExpr, lambda fp: [fp]
 
 
 NVarDef |= VARNAME, NType, VarDef
+NVarDef |= VARNAME, VarDef
 
 NType |= KW_INTEGER, lambda: Type.Integer
 NType |= KW_LONG, lambda: Type.Long
@@ -224,7 +225,6 @@ NMulOp |= KW_AND, lambda: 'and'
 
 NFactor |= KW_NOT, NFactor, lambda p: UnOpExpr('not', p)
 NFactor |= NVarDef, '(', NFunctionParams, ')', FuncVariableExpr
-NFactor |= VARNAME, '(', NFunctionParams, ')', FuncVariableExpr
 NFactor |= NVarDef, '[', NExpr, ']', FuncVariableExpr
 NFactor |= NVarDef, lambda t: VariableExpr(t)
 NFactor |= NConst
