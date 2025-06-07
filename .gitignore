@@ -1,6 +1,6 @@
 *.exe
-lab2/res
-lab2/res.txt
+lab2.1/res
+lab2.1/res.txt
 .vscode
 .idea
 cmake-build-*

@@ -130,8 +130,8 @@ KW_OR, KW_AND, KW_NOT, KW_TRUE, KW_FALSE = \
     map(make_keyword, 'or and not true false'.split())
 
 
-NProgram, NFunctionDefs, NFunctionDef, NFunctionParams, NVarDef, NType, NStatements = \
-    map(pe.NonTerminal, 'Program FunctionDefs FunctionDef FunctionParams VarDef Type Statements'.split())
+NProgram, NFunctionDefs, NFunctionDef, NFunctionParams, NVarDef, NType, NStatements, NParameter= \
+    map(pe.NonTerminal, 'Program FunctionDefs FunctionDef FunctionParams VarDef Type Statements Param'.split())
 
 NStatement, NExpr, NCmpOp, NArithmExpr, NAddOp = \
     map(pe.NonTerminal, 'Statement Expr CmpOp ArithmOp AddOp'.split())
@@ -145,12 +145,19 @@ NProgram |=  NFunctionDefs, NStatements, Program
 NFunctionDefs |= lambda: []
 NFunctionDefs |= NFunctionDefs, NFunctionDef, lambda fds, fd: fds + [fd]
 
-NFunctionDef |= KW_FUNCTION, NVarDef, '(', NFunctionParams, ')', NStatements, KW_END, KW_FUNCTION, FunctionDef
-NFunctionDef |= KW_SUB, VARNAME, '(', NFunctionParams, ')', NStatements, KW_END, KW_SUB, FunctionDef
+NFunctionDef |= (
+    KW_FUNCTION, NVarDef, '(', NFunctionParams, ')',
+    NStatements, KW_END, KW_FUNCTION,
+    lambda name, suffix, params, body: FunctionDef(f"{name}{suffix}", params, body)
+)
+# NFunctionDef |= KW_SUB, VARNAME, '(', NFunctionParams, ')', NStatements, KW_END, KW_SUB, FunctionDef
+
+NParameter |= NVarDef, '(', ')', lambda name, suffix: (name, suffix, True)  # Массив
+NParameter |= NVarDef, lambda name, suffix: (name, suffix, False)  # Скаляр
 
 NFunctionParams |= lambda: []
-NFunctionParams |= NFunctionParams, ',', NExpr, lambda fps, fp: fps + [fp]
-NFunctionParams |= NExpr, lambda fp: [fp]
+NFunctionParams |= NFunctionParams, ',', NParameter, lambda params, param: params + [param]
+NFunctionParams |= NParameter, lambda param: [param]
 
 
 
