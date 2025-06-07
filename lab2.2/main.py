@@ -15,54 +15,75 @@ class Type(enum.Enum):
     Double = 'DOUBLE'
     String = 'STRING'
 
-
+# VarDef -> VARNAME Type
 @dataclass
 class VarDef:
-    name : str
-    type : Type
+    name : str 
+    type : Type = None
 
+# Statement -> AssignStatement
+# 	   | IfStatement
+# 	   | IfElseStatement
+# 	   | WhileStatement
+# 	   | ForStatement
+# 	   | DimStatement
 class Statement(abc.ABC):
     pass
 
+# Function -> FUNCTION VarDef ( FunctionParams ) Statements END FUNCTION
+# 	  | SUB VARNAME ( FunctionParams ) Statements END SUB
 @dataclass
 class FunctionDef(Statement):
     FunctionName : str
     args : list[str]
     FunctionBlock : Statement
 
-
+# Program ->  Functions
 @dataclass
 class Program:
     function_defs : list[FunctionDef]
     statements : list[Statement]
 
-
+# Expr -> ArithmExpr
+#       | ArithmExpr > ArithmExpr
+#       | ArithmExpr < ArithmExpr
+#       | ArithmExpr >= ArithmExpr
+#       | ArithmExpr <= ArithmExpr
+#       | ArithmExpr == ArithmExpr
+#       | ArithmExpr <> ArithmExpr
 class Expr(abc.ABC):
     pass
 
-
+# AssignStatement -> Factor = Expr
 @dataclass
 class AssignStatement(Statement):
     variable : str
     expr : Expr
 
-
+# IfStatement -> IF Expr THEN Statements END IF
 @dataclass
 class IfStatement(Statement):
     condition : Expr
     then_branch : Statement
 
+# IfElseStatement -> IF Expr THEN Statements ELSE Statements END IF
 @dataclass
 class IfElseStatement(IfStatement):
     else_branch : Statement
 
-
+# WhileStatement -> DO WHILE Expr Statements LOOP
+# 		| DO UNTIL Expr Statements LOOP
+# 		| DO Statements LOOP WHILE Expr
+# 		| DO Statements LOOP UNTIL Expr
+# 		| DO Statements LOOP
 @dataclass
 class WhileStatement(Statement):
-    condition : Expr
+    condition : Expr | None
     body : Statement
+    precond: bool # с предусловием
 
 
+# ForStatement -> FOR VarDef = Expr TO Expr Statements NEXT VarDef
 @dataclass
 class ForStatement(Statement):
     variable : str
@@ -71,6 +92,7 @@ class ForStatement(Statement):
     body : Statement
     var_next : str
 
+# DimStatement - > DIM Factor
 @dataclass
 class DimStatement(Statement):
     variable : Expr
@@ -162,6 +184,7 @@ NFunctionParams |= NParameter, lambda param: [param]
 
 
 NVarDef |= VARNAME, NType, VarDef
+NVarDef |= VARNAME, VarDef
 
 NType |= KW_INTEGER, lambda: Type.Integer
 NType |= KW_LONG, lambda: Type.Long
@@ -182,19 +205,19 @@ NStatement |= (
 )
 
 NStatement |= (
-    KW_DO, KW_WHILE, NExpr, NStatements, KW_LOOP, WhileStatement
+    KW_DO, KW_WHILE, NExpr, NStatements, KW_LOOP, lambda expr, sts: WhileStatement(expr, sts, True)
 )
 NStatement |= (
-    KW_DO, KW_UNTIL, NExpr, NStatements, KW_LOOP, WhileStatement
+    KW_DO, KW_UNTIL, NExpr, NStatements, KW_LOOP, lambda expr, sts: WhileStatement(expr, sts, True)
 )
 NStatement |= (
-    KW_DO, NStatements, KW_LOOP, KW_WHILE, NExpr, WhileStatement
+    KW_DO, NStatements, KW_LOOP, KW_WHILE, NExpr, lambda sts, expr: WhileStatement(expr, sts, False)
 )
 NStatement |= (
-    KW_DO, NStatements, KW_LOOP, KW_UNTIL, NExpr, WhileStatement
+    KW_DO, NStatements, KW_LOOP, KW_UNTIL, NExpr, lambda sts, expr: WhileStatement(expr, sts, False) 
 )
 NStatement |= (
-    KW_DO, NStatements, KW_LOOP, WhileStatement
+    KW_DO, NStatements, KW_LOOP, lambda sts: WhileStatement(None, sts, False) 
 )
 NStatement |= (
     KW_FOR, NVarDef, '=', NExpr, KW_TO, NExpr, NStatements, KW_NEXT, NVarDef, ForStatement
@@ -231,7 +254,6 @@ NMulOp |= KW_AND, lambda: 'and'
 
 NFactor |= KW_NOT, NFactor, lambda p: UnOpExpr('not', p)
 NFactor |= NVarDef, '(', NFunctionParams, ')', FuncVariableExpr
-NFactor |= VARNAME, '(', NFunctionParams, ')', FuncVariableExpr
 NFactor |= NVarDef, '[', NExpr, ']', FuncVariableExpr
 NFactor |= NVarDef, lambda t: VariableExpr(t)
 NFactor |= NConst

@@ -7,3 +7,4 @@ cmake-build-*
 lab1.5/m.*
 lab1.5/lexer
 lab1.5/lexer.c
+__pycache__/
