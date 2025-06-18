@@ -1,0 +1,18 @@
+
+int good_function() {
+    return 42;
+}
+
+int missing_semicolon(int x) {
+    int y = 5  
+    return x + y;
+}
+
+double incomplete_expression() {
+    double result = 3.14 +;  
+    return result;
+}
+
+int another_good_function() {
+    return 1;
+}
