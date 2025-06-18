@@ -1,0 +1,22 @@
+Function TestSwitch%(x%)
+  Switch x%
+    Case 10:
+      x% = 10
+    Case 20, 30:
+      x% = 7
+    Case Else:
+      x% = 2 * x%
+  End Switch
+  TestSwitch% = x%
+End Function
+
+Sub ProcessValue(value%)
+  Switch value% + 5
+    Case 1:
+      value% = value% * 2
+    Case 2, 3, 4:
+      value% = value% + 10
+    Case Else:
+      value% = 0
+  End Switch
+End Sub

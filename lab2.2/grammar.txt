@@ -10,26 +10,27 @@ Program ->  Functions
 Functions -> Function*
 
 Function -> FUNCTION VarDef ( FunctionParams ) Statements END FUNCTION
-	  | SUB VARNAME ( FunctionParams ) Statements END SUB
+   | SUB VARNAME ( FunctionParams ) Statements END SUB
 
 FunctionParams -> FunctionParams , Expr
-		| Expr
-		| eps
+  | Expr
+  | eps
 
 VarDef -> VARNAME Type
 Type -> % | & | ! | # | $ | eps
-	
+ 
 Statements -> Statement*
 
-Оператор — присваивание, условие, условие с ветвлением, цикл, цикл со счётчиком, оператор DIM:
+Оператор — присваивание, условие, условие с ветвлением, цикл, цикл со счётчиком, оператор DIM, оператор Switch:
 Statement -> AssignStatement
-	   | IfStatement
-	   | IfElseStatement
-	   | WhileStatement
-	   | ForStatement
-	   | DimStatement
-	   
-	  
+    | IfStatement
+    | IfElseStatement
+    | WhileStatement
+    | ForStatement
+    | DimStatement
+    | SwitchStatement
+    
+   
 AssignStatement -> Factor = Expr
 
 IfStatement -> IF Expr THEN Statements END IF
@@ -37,14 +38,24 @@ IfElseStatement -> IF Expr THEN Statements ELSE Statements END IF
 
 Цикл (цикл с предусловием, цикл с предусловием с отрицанием, цикл с постусловием, цикл с постусловием с отрицанием, бесконечный цикл):
 WhileStatement -> DO WHILE Expr Statements LOOP
-		| DO UNTIL Expr Statements LOOP
-		| DO Statements LOOP WHILE Expr
-		| DO Statements LOOP UNTIL Expr
-		| DO Statements LOOP
-		
+  | DO UNTIL Expr Statements LOOP
+  | DO Statements LOOP WHILE Expr
+  | DO Statements LOOP UNTIL Expr
+  | DO Statements LOOP
+  
 ForStatement -> FOR VarDef = Expr TO Expr Statements NEXT VarDef
 
 DimStatement - > DIM Factor
+
+SwitchStatement -> SWITCH Expr CaseStatements END SWITCH
+
+CaseStatements -> CaseStatement*
+
+CaseStatement -> CASE CaseValues : Statements
+        | CASE ELSE : Statements
+
+CaseValues -> Expr
+     | CaseValues , Expr
 
 Выражение — переменная, константа, двуместная операция, одноместная операция, вызов функции, элемент массива:
 Expr -> ArithmExpr
@@ -56,12 +67,12 @@ Expr -> ArithmExpr
       | ArithmExpr <> ArithmExpr
       
 ArithmExpr -> Term
-	    | + Term
-	    | - Term
-	    | ArithmExpr + Term
-	    | ArithmExpr - Term
-	    | ArithmExpr OR Term
-	    
+     | + Term
+     | - Term
+     | ArithmExpr + Term
+     | ArithmExpr - Term
+     | ArithmExpr OR Term
+     
 Term -> Factor
       | Term * Factor
       | Term / Factor

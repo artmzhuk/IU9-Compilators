@@ -14,12 +14,13 @@ class Type(enum.Enum):
     Float = 'FLOAT'
     Double = 'DOUBLE'
     String = 'STRING'
+    Boolean = 'BOOL'
 
 # VarDef -> VARNAME Type
 @dataclass
 class VarDef:
     name : str 
-    type : Type = None
+    type : typing.Optional[Type]
 
 # Statement -> AssignStatement
 # 	   | IfStatement
@@ -27,6 +28,7 @@ class VarDef:
 # 	   | WhileStatement
 # 	   | ForStatement
 # 	   | DimStatement
+# 	   | SwitchStatement
 class Statement(abc.ABC):
     pass
 
@@ -98,6 +100,21 @@ class DimStatement(Statement):
     variable : Expr
 
 
+# SwitchStatement -> SWITCH Expr CaseStatements END SWITCH
+@dataclass
+class SwitchStatement(Statement):
+    expr : Expr
+    cases : list['CaseStatement']
+
+
+# CaseStatement -> CASE CaseValues Statements
+#                | CASE ELSE Statements
+@dataclass
+class CaseStatement(Statement):
+    values : list[Expr] | None
+    statements : list[Statement]
+
+
 @dataclass
 class EmptyStatement(Statement):
     pass
@@ -143,10 +160,13 @@ def make_keyword(image):
                        re_flags=re.IGNORECASE, priority=10)
 
 KW_FUNCTION, KW_SUB, KW_NEXT, KW_END, KW_INTEGER, KW_LONG, KW_FLOAT, KW_DOUBLE, KW_STRING = \
-    map(make_keyword, 'function sub next end % & ! # \$'.split())
+    map(make_keyword, 'function sub next end % & ! # \\$'.split())
 
 KW_IF, KW_THEN, KW_ELSE, KW_WHILE, KW_UNTIL, KW_DO, KW_LOOP, KW_FOR, KW_TO, KW_DIM = \
     map(make_keyword, 'if then else while until do loop for to dim'.split())
+
+KW_SWITCH, KW_CASE = \
+    map(make_keyword, 'switch case'.split())
 
 KW_OR, KW_AND, KW_NOT, KW_TRUE, KW_FALSE = \
     map(make_keyword, 'or and not true false'.split())
@@ -160,6 +180,9 @@ NStatement, NExpr, NCmpOp, NArithmExpr, NAddOp = \
 
 NTerm, NMulOp, NFactor, NConst = \
     map(pe.NonTerminal, 'Term MulOp Factor Const'.split())
+
+NSwitchStatement, NCaseStatements, NCaseStatement, NCaseValues = \
+    map(pe.NonTerminal, 'SwitchStatement CaseStatements CaseStatement CaseValues'.split())
 
 
 NProgram |=  NFunctionDefs, NStatements, Program
@@ -218,6 +241,28 @@ NStatement |= (
 NStatement |= (
     KW_DIM, NFactor, DimStatement
 )
+
+NStatement |= NSwitchStatement
+
+NSwitchStatement |= (
+    KW_SWITCH, NExpr, NCaseStatements, KW_END, KW_SWITCH,
+    lambda expr, cases: SwitchStatement(expr, cases)
+)
+
+NCaseStatements |= lambda: []
+NCaseStatements |= NCaseStatements, NCaseStatement, lambda cases, case: cases + [case]
+
+NCaseStatement |= (
+    KW_CASE, NCaseValues, ':', NStatements,
+    lambda values, statements: CaseStatement(values, statements)
+)
+NCaseStatement |= (
+    KW_CASE, KW_ELSE, ':', NStatements,
+    lambda statements: CaseStatement(None, statements)
+)
+
+NCaseValues |= NExpr, lambda expr: [expr]
+NCaseValues |= NCaseValues, ',', NExpr, lambda values, expr: values + [expr]
 
 
 NExpr |= NArithmExpr

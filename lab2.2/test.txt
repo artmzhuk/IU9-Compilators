@@ -1,4 +1,3 @@
-' Суммирование элементов массива
 Function SumArray#(Values#())
   SumArray# = 0
   For i% = 1 To Len%(Values#)
@@ -6,7 +5,6 @@ Function SumArray#(Values#())
   Next i%
 End Function
 
-' Вычисление многочлена по схеме Горнера
 Function Polynom!(x!, coefs!())
   Polynom! = 0
   For i% = 1 to Len%(coefs!)
@@ -14,7 +12,6 @@ Function Polynom!(x!, coefs!())
   Next i%
 End Function
 
-' Вычисление многочлена x? + x? + x + 1
 Function Polynom1111!(x!)
   Dim coefs!(4)
 
@@ -25,7 +22,6 @@ Function Polynom1111!(x!)
   Polynom1111! = Polynom!(x!, coefs!)
 End Function
 
-' Инициализация массива числами Фибоначчи
 Sub Fibonacci(res&())
   n% = Len%(res&)
 
@@ -44,7 +40,6 @@ Sub Fibonacci(res&())
   Loop
 End Sub
 
-' Склеивание элементов массива через разделитель: Join$(", ", words)
 Function Join$(sep$, items$())
   If Len(items$) >= 1 Then
     Join$ = items$[1]
