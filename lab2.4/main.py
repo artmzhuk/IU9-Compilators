@@ -395,7 +395,7 @@ class Parser:
     def _parse_function(self) -> Optional[FunctionDefinition]:
         try:
             if self.current.kind not in [TokenType.INT, TokenType.DOUBLE]:
-                raise ParserError(f"Expected type specifier, got {self.current.kind}", self.current)
+                raise ParserError(f"Expected type specifier, got {self.current.kind} at {self.current.line}:{self.current.col}", self.current)
             
             spec = TypeSpecifier(kind=self.current.text)
             self._advance()
@@ -889,7 +889,7 @@ class Parser:
             self._expect(TokenType.RPAREN)
             return PrimaryExprParenthesized(expression=expr)
         else:
-            raise ParserError(f"Unexpected token: {self.current.kind}", self.current)
+            raise ParserError(f"Unexpected token: {self.current.kind} at {self.current.line}:{self.current.col}", self.current,)
 
 def main():
     import sys
@@ -910,9 +910,10 @@ def main():
         ast = parser.parse()
         
         import pprint
+        pp = pprint.PrettyPrinter(indent=1, width=90, compact=True)
         
-        pprint.pp(ast)
-        pprint.pp(parser.errors)
+        pp.pprint(ast)
+        pp.pprint(parser.errors)
         
     except Exception as e:
         print(f"Error: {e}")
