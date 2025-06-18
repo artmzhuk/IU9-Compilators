@@ -1,0 +1,53 @@
+Function SumArray#(Values#())
+  SumArray# = 0
+  For i% = 1 To Len%(Values#)
+    SumArray# = SumArray# + Values#(i%)
+  Next i%
+End Function
+
+Function Polynom!(x!, coefs!())
+  Polynom! = 0
+  For i% = 1 to Len%(coefs!)
+    Polynom! = Polynom! * x! + coefs!(i%)
+  Next i%
+End Function
+
+Function Polynom1111!(x!)
+  Dim coefs!(4)
+
+  For i% = 1 To 4
+    coefs!(i%) = 1
+  Next i%
+
+  Polynom1111! = Polynom!(x!, coefs!)
+End Function
+
+Sub Fibonacci(res&())
+  n% = Len%(res&)
+
+  If n% >= 1 Then
+    res&(1) = 1
+  End If
+
+  If n% >= 2 Then
+    res&(2) = 1
+  End If
+
+  i% = 3
+  Do While i% <= n%
+    res&(i%) = res&(i% - 1) + res&(i% - 2)
+    i% = i% + 1
+  Loop
+End Sub
+
+Function Join$(sep$, items$())
+  If Len(items$) >= 1 Then
+    Join$ = items$[1]
+  Else
+    Join$ = ""
+  End If
+
+  For i% = 2 To Len%(items$)
+    Join$ = Join$ + sep$ + items$(i%)
+  Next i%
+End Function
