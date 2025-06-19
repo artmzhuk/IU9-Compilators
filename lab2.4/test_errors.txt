@@ -1,4 +1,3 @@
-
 int broken_function(int x {
     int y = 5
     return x + y; 
@@ -10,20 +9,6 @@ double another_function(double a, double b) {
     return result
 }  
 
-int third_function() {
-    int arr[[10;  
-    int i = 0;
-    
-    for (i = 0; i < 10 i++) { 
-        arr[i] = i * 2;
-    }
-    
-    return arr[0];
-}
-
-int @#$invalid_name() { 
-    return 42;
-}
 
 int valid_function() {
     return 1;
